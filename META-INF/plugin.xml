@@ -1,0 +1,44 @@
+<idea-plugin version="2">
+    <id>org.para.plugin.openInSplittedTab</id>
+    <name>Open in splitted tab</name>
+    <version>0.1</version>
+    <vendor email="raise.rescue@gmail.com" url="https://www.github.com/parallaxe">Hendrik von Prince</vendor>
+
+    <description><![CDATA[
+      Opens the declaration / implementation of the current selected symbol within a vertically splitted tab.
+      If there already is an splitted tab, it will use this. If not, it will open a new one.
+    ]]></description>
+
+    <change-notes><![CDATA[
+            Initial release
+            ]]>
+    </change-notes>
+
+    <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+    <idea-version since-build="131"/>
+
+    <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+         on how to target different products -->
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+    </extensions>
+
+    <application-components>
+        <!-- Add your application components here -->
+    </application-components>
+
+    <project-components>
+        <!-- Add your project components here -->
+    </project-components>
+
+    <actions>
+        <!-- Add your actions here -->
+        <action id="opennInSplittedTab" class="org.para.plugin.OpenInSplittedTabAction" text="Open in splitted tab"
+                description="Opens the selected symbol in a vertically splitted tab">
+            <add-to-group group-id="EditorPopupMenu.GoTo" anchor="last"/>
+        </action>
+    </actions>
+
+</idea-plugin>
