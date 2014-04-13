@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +19,18 @@ import javax.swing.*;
  */
 public class OpenInSplittedTabAction extends AnAction {
 
+    private boolean closeCurrentSelectedFile;
+
     public void actionPerformed(AnActionEvent e) {
         PsiElement target = getTarget(e);
         EditorWindow nextWindowPane = receiveNextWindowPane(e.getDataContext());
+        VirtualFile currentSelectedFile = nextWindowPane.getSelectedFile();
         nextWindowPane.getManager().openFileImpl2(nextWindowPane, target.getContainingFile().getVirtualFile(), true);
+
+        if (this.closeCurrentSelectedFile) {
+            nextWindowPane.closeFile(currentSelectedFile);
+        }
+
         nextWindowPane.requestFocus(true);
         nextWindowPane.getManager().getSelectedTextEditor().getCaretModel().moveToOffset(target.getTextOffset());
         nextWindowPane.getManager().getSelectedTextEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -46,7 +55,10 @@ public class OpenInSplittedTabAction extends AnAction {
 
         EditorWindow nextWindowPane = fileEditorManager.getNextWindow(activeWindowPane);
 
+        this.closeCurrentSelectedFile = false;
+
         if (nextWindowPane == activeWindowPane) {
+            this.closeCurrentSelectedFile = true;
             FileEditorManagerEx fileManagerEx = (FileEditorManagerEx) FileEditorManagerEx.getInstance(project);
             fileManagerEx.createSplitter(SwingConstants.VERTICAL, fileManagerEx.getCurrentWindow());
             nextWindowPane = fileEditorManager.getNextWindow(activeWindowPane);
