@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>org.para.plugin.openInSplittedTab</id>
     <name>Open in splitted tab</name>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
     <vendor email="raise.rescue@gmail.com" url="https://www.github.com/parallaxe">Hendrik von Prince</vendor>
 
     <description><![CDATA[

@@ -13,6 +13,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * Created by Hendrik von Prince on 22.02.14.
@@ -22,18 +24,25 @@ public class OpenInSplittedTabAction extends AnAction {
     private boolean closeCurrentSelectedFile;
 
     public void actionPerformed(AnActionEvent e) {
-        PsiElement target = getTarget(e);
-        EditorWindow nextWindowPane = receiveNextWindowPane(e.getDataContext());
+        final PsiElement target = getTarget(e);
+        final EditorWindow nextWindowPane = receiveNextWindowPane(e.getDataContext());
         VirtualFile currentSelectedFile = nextWindowPane.getSelectedFile();
-        nextWindowPane.getManager().openFileImpl2(nextWindowPane, target.getContainingFile().getVirtualFile(), true);
 
         if (this.closeCurrentSelectedFile) {
             nextWindowPane.closeFile(currentSelectedFile);
         }
 
-        nextWindowPane.requestFocus(true);
-        nextWindowPane.getManager().getSelectedTextEditor().getCaretModel().moveToOffset(target.getTextOffset());
-        nextWindowPane.getManager().getSelectedTextEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+        Timer delayingScrollToCaret = new Timer(10, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                nextWindowPane.setAsCurrentWindow(true);
+                nextWindowPane.getManager().getSelectedTextEditor().getCaretModel().moveToOffset(target.getTextOffset());
+                nextWindowPane.getManager().getSelectedTextEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+            }
+        }
+        );
+        delayingScrollToCaret.setRepeats(false);
+        delayingScrollToCaret.start();
     }
 
     @Override
