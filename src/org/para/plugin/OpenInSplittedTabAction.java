@@ -27,6 +27,7 @@ public class OpenInSplittedTabAction extends AnAction {
         final PsiElement target = getTarget(e);
         final EditorWindow nextWindowPane = receiveNextWindowPane(e.getDataContext());
         VirtualFile currentSelectedFile = nextWindowPane.getSelectedFile();
+        nextWindowPane.getManager().openFileImpl2(nextWindowPane, target.getContainingFile().getVirtualFile(), true);
 
         if (this.closeCurrentSelectedFile) {
             nextWindowPane.closeFile(currentSelectedFile);
