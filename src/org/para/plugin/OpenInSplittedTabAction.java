@@ -22,34 +22,51 @@ import java.awt.event.ActionListener;
 public class OpenInSplittedTabAction extends AnAction {
 
     private boolean closeCurrentSelectedFile;
+    private GotoDeclarationAction gotoDeclarationAction; // used as alternative, when no PsiElement is found as target
+
+    public OpenInSplittedTabAction() {
+        this.gotoDeclarationAction = new GotoDeclarationAction();
+    }
 
     public void actionPerformed(AnActionEvent e) {
         final PsiElement target = getTarget(e);
-        final EditorWindow nextWindowPane = receiveNextWindowPane(e.getDataContext());
-        VirtualFile currentSelectedFile = nextWindowPane.getSelectedFile();
-        nextWindowPane.getManager().openFileImpl2(nextWindowPane, target.getContainingFile().getVirtualFile(), true);
 
-        if (this.closeCurrentSelectedFile) {
-            nextWindowPane.closeFile(currentSelectedFile);
-        }
+        // if we got a valid symbol we will open it in a splitted tab, else we call the GotoDeclarationAction
+        if (target != null) {
+            final EditorWindow nextWindowPane = receiveNextWindowPane(e.getDataContext());
+            VirtualFile currentSelectedFile = nextWindowPane.getSelectedFile();
+            nextWindowPane.getManager().openFileImpl2(nextWindowPane, target.getContainingFile().getVirtualFile(), true);
 
-        Timer delayingScrollToCaret = new Timer(10, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                nextWindowPane.setAsCurrentWindow(true);
-                nextWindowPane.getManager().getSelectedTextEditor().getCaretModel().moveToOffset(target.getTextOffset());
-                nextWindowPane.getManager().getSelectedTextEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+            if (this.closeCurrentSelectedFile) {
+                nextWindowPane.closeFile(currentSelectedFile);
             }
+
+            // defer the scrolling of the new tab, otherwise the scrolling may not work properly
+            Timer delayingScrollToCaret = new Timer(10, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent actionEvent) {
+                    nextWindowPane.setAsCurrentWindow(true);
+                    nextWindowPane.getManager().getSelectedTextEditor().getCaretModel().moveToOffset(target.getTextOffset());
+                    nextWindowPane.getManager().getSelectedTextEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+                }
+            }
+            );
+            delayingScrollToCaret.setRepeats(false);
+            delayingScrollToCaret.start();
+        } else {
+            this.gotoDeclarationAction.actionPerformed(e);
         }
-        );
-        delayingScrollToCaret.setRepeats(false);
-        delayingScrollToCaret.start();
     }
 
     @Override
     public void update(AnActionEvent e) {
         PsiElement target = getTarget(e);
-        e.getPresentation().setEnabled(target != null);
+        if (target != null) {
+            e.getPresentation().setEnabled(true);
+        } else {
+            // we found no target for our own action, but maybe we can execute the GotoDeclaration-action
+            this.gotoDeclarationAction.update(e);
+        }
     }
 
     /**
