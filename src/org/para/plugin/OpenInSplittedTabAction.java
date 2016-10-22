@@ -13,15 +13,12 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Created by Hendrik von Prince on 22.02.14.
  */
 public class OpenInSplittedTabAction extends AnAction {
 
-    private boolean closeCurrentSelectedFile;
     private GotoDeclarationAction gotoDeclarationAction; // used as alternative, when no PsiElement is found as target
 
     public OpenInSplittedTabAction() {
@@ -33,29 +30,43 @@ public class OpenInSplittedTabAction extends AnAction {
 
         // if we got a valid symbol we will open it in a splitted tab, else we call the GotoDeclarationAction
         if (target != null) {
-            final EditorWindow nextWindowPane = receiveNextWindowPane(e.getDataContext());
-            VirtualFile currentSelectedFile = nextWindowPane.getSelectedFile();
+            final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+            final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+            final EditorWindow nextWindowPane = receiveNextWindowPane(project, fileEditorManager, e.getDataContext());
+
+            fileEditorManager.setCurrentWindow(nextWindowPane);
+            // We want to replace the current active tab inside the splitter instead of creating a new tab.
+            // So, we save which file is currently open, open the new file (in a new tab) and then close the
+            // previous tab. To do this, we save which file is currently open.
+            final VirtualFile fileToClose = fileEditorManager.getCurrentFile();
+            // use the openFileImpl2-method instead of the openFile-method, as the openFile-method would open a new
+            // window when the assigned shortcut for this action includes the shift-key
             nextWindowPane.getManager().openFileImpl2(nextWindowPane, target.getContainingFile().getVirtualFile(), true);
-
-            if (this.closeCurrentSelectedFile) {
-                nextWindowPane.closeFile(currentSelectedFile);
+            // Of course, we don't want to close the tab if the new target is inside the same file as before.
+            if(fileToClose != null && !fileToClose.equals(target.getContainingFile().getVirtualFile())) {
+                fileEditorManager.getCurrentWindow().closeFile(fileToClose);
             }
 
-            // defer the scrolling of the new tab, otherwise the scrolling may not work properly
-            Timer delayingScrollToCaret = new Timer(10, new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent actionEvent) {
-                    nextWindowPane.setAsCurrentWindow(true);
-                    nextWindowPane.getManager().getSelectedTextEditor().getCaretModel().moveToOffset(target.getTextOffset());
-                    nextWindowPane.getManager().getSelectedTextEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
-                }
-            }
-            );
-            delayingScrollToCaret.setRepeats(false);
-            delayingScrollToCaret.start();
+            scrollToTarget(target, nextWindowPane);
         } else {
             this.gotoDeclarationAction.actionPerformed(e);
         }
+    }
+
+    private void scrollToTarget(PsiElement target, EditorWindow nextWindowPane) {
+        // defer the scrolling of the new tab, otherwise the scrolling may not work properly
+        Timer delayingScrollToCaret = new Timer(10, actionEvent -> {
+            if (!nextWindowPane.isShowing()) {
+                scrollToTarget(target, nextWindowPane);
+            } else {
+                nextWindowPane.setAsCurrentWindow(true);
+                nextWindowPane.getManager().getSelectedTextEditor().getCaretModel().moveToOffset(target.getTextOffset());
+                nextWindowPane.getManager().getSelectedTextEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+            }
+        }
+        );
+        delayingScrollToCaret.setRepeats(false);
+        delayingScrollToCaret.start();
     }
 
     @Override
@@ -70,22 +81,20 @@ public class OpenInSplittedTabAction extends AnAction {
     }
 
     /**
+     * @param fileEditorManager
+     * @param project
      * @param dataContext
      * @return If there already are splitted tabs, it will return the next one. If not, it creates a vertically splitted tab
      */
-    private EditorWindow receiveNextWindowPane(DataContext dataContext) {
-        // the following lines are copied and modified from the tab-to-next-splitter-plugin at https://github.com/jacksingleton/tab-to-next-splitter/blob/master/src/com/jacksingleton/tabtonextsplitter/TabToNextSplitter.java
+    private EditorWindow receiveNextWindowPane(Project project,
+                                               FileEditorManagerEx fileEditorManager,
+                                               DataContext dataContext) {
         final EditorWindow activeWindowPane = EditorWindow.DATA_KEY.getData(dataContext);
-        final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-        final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
         if (activeWindowPane == null) return null; // Action invoked when no files are open; do nothing
 
         EditorWindow nextWindowPane = fileEditorManager.getNextWindow(activeWindowPane);
 
-        this.closeCurrentSelectedFile = false;
-
         if (nextWindowPane == activeWindowPane) {
-            this.closeCurrentSelectedFile = true;
             FileEditorManagerEx fileManagerEx = (FileEditorManagerEx) FileEditorManagerEx.getInstance(project);
             fileManagerEx.createSplitter(SwingConstants.VERTICAL, fileManagerEx.getCurrentWindow());
             nextWindowPane = fileEditorManager.getNextWindow(activeWindowPane);

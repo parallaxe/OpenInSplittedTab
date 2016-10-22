@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>org.para.plugin.openInSplittedTab</id>
     <name>Open in splitted tab</name>
-    <version>0.1.4</version>
+    <version>0.1.5</version>
     <vendor email="raise.rescue@gmail.com" url="https://www.github.com/parallaxe">Hendrik von Prince</vendor>
 
     <description><![CDATA[
@@ -10,6 +10,9 @@
     ]]></description>
 
     <change-notes><![CDATA[
+            <ul>0.1.5
+                <li>Bugfix (#8): Reworked how the files are opened. This should improve the stability. Thanks Nazar for reporting and testing!</li>
+            </ul>
             <ul>0.1.4
                 <li>Improvement (#5): Calling the "Goto declaration"-action when the API can't resolve a symbol at the
                   current cursor-position. This enables you to use the "Open in splitted tab"-action also in
