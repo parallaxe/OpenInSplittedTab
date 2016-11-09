@@ -1,30 +1,47 @@
 <idea-plugin version="2">
     <id>org.para.plugin.openInSplittedTab</id>
     <name>Open in splitted tab</name>
-    <version>0.1.5</version>
+    <version>0.2</version>
     <vendor email="raise.rescue@gmail.com" url="https://www.github.com/parallaxe">Hendrik von Prince</vendor>
 
     <description><![CDATA[
-      Opens the declaration / implementation of the current selected symbol within a vertically splitted tab.
-      If there already is an splitted tab, it will use this. If not, it will open a new one.
+      <p>Inspired by the assistant-view in Xcode. Opens the declaration / implementation of the current selected symbol
+      within a vertically splitted tab.</p>
+      <p>If there already is an splitted tab, it will use this. If not, it will open a new one.
+      There are two actions available:
+      <ul>
+        <li>"Open in splitted tab": Mimics the behaviour of Xcode and opens the file always in the same tab.</li>
+        <li>"Open in splitted (new) tab": Always opens the file in a new tab.</li>
+      </ul>
+      The actions have no shortcuts assigned by default and only accessible by the "GoTo"-menu.
+      </p>
     ]]></description>
 
     <change-notes><![CDATA[
-            <ul>0.1.5
+            <h3>0.2</h3>
+            <ul>
+                <li>Feature (#9): Added a second action that leaves existing tabs open.</li>
+            </ul>
+            <h3>0.1.5</h3>
+            <ul>
                 <li>Bugfix (#8): Reworked how the files are opened. This should improve the stability. Thanks Nazar for reporting and testing!</li>
             </ul>
-            <ul>0.1.4
+            <h3>0.1.4</h3>
+            <ul>
                 <li>Improvement (#5): Calling the "Goto declaration"-action when the API can't resolve a symbol at the
                   current cursor-position. This enables you to use the "Open in splitted tab"-action also in
                    language-injected SQL. Thanks to raveren for this suggestion.</li>
             </ul>
-            <ul>0.1.2 & 0.1.3
+            <h3>0.1.2 & 0.1.3</h3>
+            <ul>
                 <li>Bugfix (#3): Fixing "Half of line upper than necessary" by deferring the scrolling</li>
             </ul>
-            <ul>0.1.1
+            <h3>0.1.1</h3>
+            <ul>
                 <li>Bugfix (#2): Opens only one instead of two tabs</li>
             </ul>
-            <ul>0.1.0
+            <h3>0.1.0</h3>
+            <ul>
                 <li>Initial release</li>
             </ul>
             ]]>
@@ -53,6 +70,10 @@
         <!-- Add your actions here -->
         <action id="opennInSplittedTab" class="org.para.plugin.OpenInSplittedTabAction" text="Open in splitted tab"
                 description="Opens the selected symbol in a vertically splitted tab">
+            <add-to-group group-id="EditorPopupMenu.GoTo" anchor="last"/>
+        </action>
+        <action id="opennInNewSplittedTab" class="org.para.plugin.OpenInSplittedNewTabAction" text="Open in splitted (new) tab"
+                description="Opens the selected symbol in a vertically splitted tab and preserves all previously opened tabs.">
             <add-to-group group-id="EditorPopupMenu.GoTo" anchor="last"/>
         </action>
     </actions>
